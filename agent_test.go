@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pion/ice/v4/internal/fakenet"
+	"github.com/linkanyio/ice/internal/fakenet"
 	"github.com/pion/logging"
 	"github.com/pion/stun/v3"
 	"github.com/pion/transport/v3/test"
@@ -179,7 +179,7 @@ func TestHandlePeerReflexive(t *testing.T) {
 }
 
 // Assert that Agent on startup sends message, and doesn't wait for connectivityTicker to fire
-// https://github.com/pion/ice/issues/15
+// https://github.com/linkanyio/ice/issues/15
 func TestConnectivityOnStartup(t *testing.T) {
 	defer test.CheckRoutines(t)()
 

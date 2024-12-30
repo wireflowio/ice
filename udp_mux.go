@@ -5,6 +5,7 @@ package ice
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/netip"
@@ -124,9 +125,66 @@ func NewUDPMuxDefault(params UDPMuxParams) *UDPMuxDefault {
 		localAddrsForUnspecified: localAddrsForUnspecified,
 	}
 
-	go m.connWorker()
-
 	return m
+}
+
+func (m *UDPMuxDefault) HandleStunMessage(addr net.Addr, buf []byte, n int) (bool, error) {
+	if stun.IsMessage(buf) {
+		netUDPAddr, ok := addr.(*net.UDPAddr)
+		if !ok {
+			return false, errors.New("Underlying PacketConn did not return a UDPAddr")
+		}
+		udpAddr, err := newIPPort(netUDPAddr.IP, netUDPAddr.Zone, uint16(netUDPAddr.Port))
+		if err != nil {
+			return false, errors.New("Failed to create a new IP/Port host pair")
+		}
+
+		// If we have already seen this address dispatch to the appropriate destination
+		m.addressMapMu.Lock()
+		destinationConn := m.addressMap[udpAddr]
+		m.addressMapMu.Unlock()
+
+		// If we haven't seen this address before but is a STUN packet lookup by ufrag
+		if destinationConn == nil && stun.IsMessage(buf[:n]) {
+			msg := &stun.Message{
+				Raw: append([]byte{}, buf[:n]...),
+			}
+
+			if err = msg.Decode(); err != nil {
+				m.params.Logger.Warnf("Failed to Handle decode ICE from %s: %v", addr.String(), err)
+				return false, fmt.Errorf("Failed to Handle decode ICE from %s: %v", addr.String(), err)
+			}
+
+			attr, stunAttrErr := msg.Get(stun.AttrUsername)
+			if stunAttrErr != nil {
+				m.params.Logger.Warnf("No Username attribute in STUN message from %s", addr.String())
+				return false, fmt.Errorf("No Username attribute in STUN message from %s", addr.String())
+			}
+
+			ufrag := strings.Split(string(attr), ":")[0]
+			isIPv6 := netUDPAddr.IP.To4() == nil
+
+			m.mu.Lock()
+			destinationConn, _ = m.getConn(ufrag, isIPv6)
+			m.mu.Unlock()
+		}
+
+		if destinationConn == nil {
+			m.params.Logger.Tracef("Dropping packet from %s, addr: %s", udpAddr.addr, addr)
+			return false, fmt.Errorf("Dropping packet from %s, addr: %s", udpAddr.addr, addr)
+		}
+
+		if err = destinationConn.writePacket(buf[:n], netUDPAddr); err != nil {
+			m.params.Logger.Errorf("Failed to write packet: %v", err)
+			return false, fmt.Errorf("Failed to write packet: %v", err)
+		}
+
+		return true, nil
+
+	}
+
+	return false, nil
+
 }
 
 // LocalAddr returns the listening address of this UDPMuxDefault

@@ -14,7 +14,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/pion/ice/v4"
+	"github.com/linkanyio/ice"
+
 	"github.com/pion/randutil"
 )
 

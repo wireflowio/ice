@@ -1,4 +1,4 @@
-module github.com/pion/ice/v4
+module github.com/linkanyio/ice
 
 go 1.20
 

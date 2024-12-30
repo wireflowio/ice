@@ -16,8 +16,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	stunx "github.com/pion/ice/v4/internal/stun"
-	"github.com/pion/ice/v4/internal/taskloop"
+	stunx "github.com/linkanyio/ice/internal/stun"
+	"github.com/linkanyio/ice/internal/taskloop"
 	"github.com/pion/logging"
 	"github.com/pion/mdns/v2"
 	"github.com/pion/stun/v3"
@@ -149,8 +149,13 @@ type Agent struct {
 	enableUseCandidateCheckPriority bool
 }
 
+func NewTieBreaker() uint64 {
+	return globalMathRandomGenerator.Uint64()
+}
+
 // NewAgent creates a new Agent
 func NewAgent(config *AgentConfig) (*Agent, error) { //nolint:gocognit
+
 	var err error
 	if config.PortMax < config.PortMin {
 		return nil, ErrPort
@@ -181,7 +186,7 @@ func NewAgent(config *AgentConfig) (*Agent, error) { //nolint:gocognit
 	startedCtx, startedFn := context.WithCancel(context.Background())
 
 	a := &Agent{
-		tieBreaker:       globalMathRandomGenerator.Uint64(),
+		tieBreaker:       config.Tiebreaker,
 		lite:             config.Lite,
 		gatheringState:   GatheringStateNew,
 		connectionState:  ConnectionStateNew,
@@ -617,6 +622,11 @@ func (a *Agent) AddRemoteCandidate(c Candidate) error {
 		}
 	}()
 	return nil
+}
+
+// GetTieBreaker gets the tie breaker when agent created.
+func (a *Agent) GetTieBreaker() uint64 {
+	return a.tieBreaker
 }
 
 func (a *Agent) resolveAndAddMulticastCandidate(c *CandidateHost) {
