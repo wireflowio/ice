@@ -131,6 +131,38 @@ func (c *udpConn) ReadFrom(p []byte) (n int, addr net.Addr, err error) {
 	return n, addr, err
 }
 
+func (m *UniversalUDPMuxDefault) FilterMessage(buf []byte, n int, addr net.Addr) (bool, error) {
+	var err error
+	if !stun.IsMessage(buf[:n]) {
+		return false, nil
+	}
+
+	msg := &stun.Message{
+		Raw: append([]byte{}, buf[:n]...),
+	}
+
+	if err = msg.Decode(); err != nil {
+		m.params.Logger.Warnf("Failed to Handle decode ICE from %s: %v", addr.String(), err)
+		return false, fmt.Errorf("Failed to Handle decode ICE from %s: %v", addr.String(), err)
+	}
+
+	return m.HandleStunMessage(msg, addr.(*net.UDPAddr))
+}
+
+func (m *UniversalUDPMuxDefault) HandleStunMessage(msg *stun.Message, addr *net.UDPAddr) (bool, error) {
+	var err error
+	if m.isXORMappedResponse(msg, addr.String()) {
+		err = m.handleXORMappedResponse(addr, msg)
+		if err != nil {
+			m.params.Logger.Debugf("%w: %v", errGetXorMappedAddrResponse, err)
+			err = nil
+		}
+		return true, err
+	}
+
+	return m.UDPMuxDefault.HandleStunMessage(msg, addr)
+}
+
 // isXORMappedResponse indicates whether the message is a XORMappedAddress and is coming from the known STUN server.
 func (m *UniversalUDPMuxDefault) isXORMappedResponse(msg *stun.Message, stunAddr string) bool {
 	m.mu.Lock()

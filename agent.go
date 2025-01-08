@@ -149,8 +149,8 @@ type Agent struct {
 	enableUseCandidateCheckPriority bool
 }
 
-func NewTieBreaker() uint64 {
-	return globalMathRandomGenerator.Uint64()
+func NewTieBreaker() uint32 {
+	return globalMathRandomGenerator.Uint32()
 }
 
 // NewAgent creates a new Agent

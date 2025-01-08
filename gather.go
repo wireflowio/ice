@@ -555,7 +555,7 @@ func (a *Agent) gatherCandidatesSrflx(ctx context.Context, urls []*stun.URI, net
 					case <-cancelCtx.Done():
 						return
 					case <-a.loop.Done():
-						_ = conn.Close()
+						//_ = conn.Close()
 					}
 				}()
 
