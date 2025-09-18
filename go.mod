@@ -1,4 +1,4 @@
-module github.com/linkanyio/ice
+module github.com/wireflowio/ice
 
 go 1.20
 

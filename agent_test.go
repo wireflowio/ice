@@ -15,12 +15,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/linkanyio/ice/internal/fakenet"
 	"github.com/pion/logging"
 	"github.com/pion/stun/v3"
 	"github.com/pion/transport/v3/test"
 	"github.com/pion/transport/v3/vnet"
 	"github.com/stretchr/testify/require"
+	"github.com/wireflowio/ice/internal/fakenet"
 )
 
 type BadAddr struct{}
@@ -179,7 +179,7 @@ func TestHandlePeerReflexive(t *testing.T) {
 }
 
 // Assert that Agent on startup sends message, and doesn't wait for connectivityTicker to fire
-// https://github.com/linkanyio/ice/issues/15
+// https://github.com/wireflowio/ice/issues/15
 func TestConnectivityOnStartup(t *testing.T) {
 	defer test.CheckRoutines(t)()
 

@@ -302,7 +302,7 @@ type liteSelector struct {
 func (s *liteSelector) ContactCandidates() {
 	if _, ok := s.pairCandidateSelector.(*controllingSelector); ok {
 		//nolint:godox
-		// https://github.com/linkanyio/ice/issues/96
+		// https://github.com/wireflowio/ice/issues/96
 		// TODO: implement lite controlling agent. For now falling back to full agent.
 		// This only happens if both peers are lite. See RFC 8445 S6.1.1 and S6.2
 		s.pairCandidateSelector.ContactCandidates()

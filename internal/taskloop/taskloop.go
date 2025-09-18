@@ -10,7 +10,7 @@ import (
 	"errors"
 	"time"
 
-	atomicx "github.com/linkanyio/ice/internal/atomic"
+	atomicx "github.com/wireflowio/ice/internal/atomic"
 )
 
 // ErrClosed indicates that the loop has been stopped
